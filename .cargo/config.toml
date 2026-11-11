@@ -1,0 +1,4 @@
+# Windows (MSVC): link the C runtime statically, so vibelc.exe needs no VCRUNTIME140.dll (the
+# Visual C++ Redistributable) and runs on a clean Windows; it then only imports system DLLs.
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]

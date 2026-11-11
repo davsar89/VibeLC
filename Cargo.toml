@@ -1,0 +1,59 @@
+[package]
+name = "vibelc"
+version = "1.0.1"
+edition = "2024"
+rust-version = "1.95"
+license = "GPL-3.0-or-later"
+description = "Fully vibe coded lightweight vlc like video player"
+readme = "README.md"
+build = "build.rs"
+publish = false
+
+[dependencies]
+egui = "0.37"
+egui-winit = "0.37"
+egui_glow = { version = "0.37", features = ["winit"] }
+winit = "0.30.13"
+glutin = "0.32"
+glutin-winit = "0.5"
+# Must match the glow version egui_glow uses, so both share one `glow::Context` type.
+glow = "0.17"
+libloading = "0.9"
+rfd = "0.18"
+keepawake = "0.6"
+interprocess = "2.4"
+serde = { version = "1", features = ["derive"] }
+toml = "1"
+directories = "6"
+png = "0.18"
+log = { version = "0.4", features = ["std"] }
+lexopt = "0.3"
+memmap2 = "0.9"
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[target.'cfg(windows)'.dependencies]
+# Already in the tree (keepawake); only the Direct3D 11 output's bindings are added.
+windows = { version = "0.62", features = [
+    "Win32_Graphics_Direct3D",
+    "Win32_Graphics_Direct3D_Fxc",
+    "Win32_Graphics_Direct3D11",
+    "Win32_Graphics_Dxgi",
+    "Win32_Graphics_Dxgi_Common",
+] }
+
+[build-dependencies]
+winresource = "0.1"
+
+[profile.release]
+# Whole-program optimization. No target-cpu: the packages must run on any x86-64 PC, and the hot
+# code (FFmpeg, dav1d, libplacebo) picks its SIMD level at run time anyway.
+lto = "fat"
+codegen-units = 1
+strip = "debuginfo"
+
+[profile.dev.package."*"]
+# Dependencies (egui tessellation, png decoding) are too slow unoptimized for smooth playback in
+# debug builds; our own crate stays at opt-level 0 for fast rebuilds.
+opt-level = 2

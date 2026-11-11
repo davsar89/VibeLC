@@ -1,0 +1,27 @@
+# Third-party software in VibeLC
+
+VibeLC is free software under the GNU General Public License, version 3 or later (`LICENSE`).
+It uses:
+
+- **libmpv** (<https://mpv.io>) for playback, with FFmpeg, libass, libplacebo, dav1d and LuaJIT,
+  under the GNU GPL version 2 or later. The Linux package's `libmpv.so.2` is built by
+  `packaging/linux/build-libmpv.sh` in the VibeLC source from the upstream releases named there.
+  The Windows zip bundles `libmpv-2.dll` from <https://github.com/shinchiro/mpv-winbuild-cmake>;
+  `libmpv-source.txt` names the exact build, and that project's recipes link the source of every
+  component.
+- **Vulkan loader** (Windows zip only): `vulkan-1.dll` from LunarG's Vulkan Runtime, which
+  libmpv needs even on PCs whose graphics driver has no Vulkan; MIT and Apache 2.0
+  (`VulkanRT-License.txt`).
+- **Inter** (<https://rsms.me/inter>), SIL Open Font License 1.1 (`OFL-Inter.txt`).
+- **Lucide** icons (<https://lucide.dev>), ISC License (`LICENSE-lucide.txt`).
+- The Rust crates below, compiled into the program.
+
+{{#each licenses}}
+## {{{name}}}
+
+Used by: {{#each used_by}}{{crate.name}} {{crate.version}}{{#unless @last}}, {{/unless}}{{/each}}
+
+```text
+{{{text}}}
+```
+{{/each}}

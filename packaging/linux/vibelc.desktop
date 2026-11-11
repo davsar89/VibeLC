@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=VibeLC
+GenericName=Media Player
+Comment=Play video, audio and network streams
+Exec=vibelc %F
+Icon=vibelc
+Terminal=false
+Categories=AudioVideo;Video;Audio;Player;
+Keywords=video;movie;music;player;playlist;
+MimeType=video/mp4;video/x-matroska;video/webm;video/x-msvideo;video/quicktime;video/mpeg;video/x-flv;video/ogg;video/x-ogm+ogg;video/x-ms-wmv;video/x-ms-asf;video/3gpp;video/3gpp2;video/mp2t;video/x-m4v;video/vnd.avi;audio/mpeg;audio/mp4;audio/x-m4a;audio/aac;audio/flac;audio/x-flac;audio/ogg;audio/x-vorbis+ogg;audio/x-opus+ogg;audio/opus;audio/x-wav;audio/wav;audio/x-matroska;audio/webm;audio/x-ms-wma;audio/x-ape;audio/x-musepack;application/x-mpegurl;audio/x-mpegurl;audio/mpegurl;application/vnd.apple.mpegurl;audio/x-scpls;
