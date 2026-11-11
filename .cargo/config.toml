@@ -2,3 +2,7 @@
 # Visual C++ Redistributable) and runs on a clean Windows; it then only imports system DLLs.
 [target.x86_64-pc-windows-msvc]
 rustflags = ["-C", "target-feature=+crt-static"]
+
+# Windows (llvm-mingw, `static-mpv`): libunwind linked in, not libunwind.dll.
+[target.x86_64-pc-windows-gnullvm]
+rustflags = ["-C", "target-feature=+crt-static"]

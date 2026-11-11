@@ -1,6 +1,6 @@
 [package]
 name = "vibelc"
-version = "1.0.1"
+version = "1.0.2"
 edition = "2024"
 rust-version = "1.95"
 license = "GPL-3.0-or-later"
@@ -45,6 +45,11 @@ windows = { version = "0.62", features = [
 
 [build-dependencies]
 winresource = "0.1"
+
+[features]
+# Links libmpv into vibelc instead of loading it at run time: the one built by
+# packaging/windows/build-libmpv.sh, found with `pkg-config --static mpv` (PKG_CONFIG_PATH).
+static-mpv = []
 
 [profile.release]
 # Whole-program optimization. No target-cpu: the packages must run on any x86-64 PC, and the hot

@@ -3,15 +3,14 @@
 VibeLC is free software under the GNU General Public License, version 3 or later (`LICENSE`).
 It uses:
 
-- **libmpv** (<https://mpv.io>) for playback, with FFmpeg, libass, libplacebo, dav1d and LuaJIT,
-  under the GNU GPL version 2 or later. The Linux package's `libmpv.so.2` is built by
-  `packaging/linux/build-libmpv.sh` in the VibeLC source from the upstream releases named there.
-  The Windows zip bundles `libmpv-2.dll` from <https://github.com/shinchiro/mpv-winbuild-cmake>;
-  `libmpv-source.txt` names the exact build, and that project's recipes link the source of every
-  component.
-- **Vulkan loader** (Windows zip only): `vulkan-1.dll` from LunarG's Vulkan Runtime, which
-  libmpv needs even on PCs whose graphics driver has no Vulkan; MIT and Apache 2.0
-  (`VulkanRT-License.txt`).
+- **libmpv** (<https://mpv.io>) for playback, under the GNU GPL version 2 or later, with FFmpeg
+  (LGPL 2.1+), libass (ISC), libplacebo (LGPL 2.1+), dav1d (BSD-2-Clause) and LuaJIT (MIT). It is
+  built from the upstream releases named in the VibeLC source: on Linux into the package's
+  `libmpv.so.2` by `packaging/linux/build-libmpv.sh`; on Windows linked into `vibelc.exe` by
+  `packaging/windows/build-libmpv.sh`, there also with FreeType (FreeType License), FriBidi
+  (LGPL 2.1+), HarfBuzz (MIT), zlib (zlib License), shaderc, glslang, SPIRV-Tools and SPIRV-Cross
+  (Apache 2.0, glslang also BSD-3-Clause), and the LLVM runtime libraries libc++ and libunwind
+  (Apache 2.0 with LLVM exception) and mingw-w64 (ZPL and public domain).
 - **Inter** (<https://rsms.me/inter>), SIL Open Font License 1.1 (`OFL-Inter.txt`).
 - **Lucide** icons (<https://lucide.dev>), ISC License (`LICENSE-lucide.txt`).
 - The Rust crates below, compiled into the program.

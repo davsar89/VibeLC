@@ -61,11 +61,16 @@ Name: "associate"; Description: "{cm:Associate}"; GroupDescription: "{cm:Integra
 
 [Files]
 Source: "{#Stage}\vibelc.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#Stage}\libmpv-2.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#Stage}\vulkan-1.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#Stage}\*.txt"; DestDir: "{app}"
 Source: "{#Stage}\*.md"; DestDir: "{app}"
 Source: "{#Stage}\LICENSE"; DestDir: "{app}"
+
+[InstallDelete]
+; Up to 1.0.1, libmpv was a DLL next to vibelc.exe; it is now linked in.
+Type: files; Name: "{app}\libmpv-2.dll"
+Type: files; Name: "{app}\vulkan-1.dll"
+Type: files; Name: "{app}\libmpv-source.txt"
+Type: files; Name: "{app}\VulkanRT-License.txt"
 
 [Icons]
 Name: "{group}\VibeLC"; Filename: "{app}\vibelc.exe"

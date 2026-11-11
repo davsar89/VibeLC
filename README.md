@@ -27,17 +27,16 @@ It is built to stay light on old machines:
 
 ## Install
 
-`vibelc-1.0.1.zip` holds everything in one `VibeLC` folder: the Windows program, the Linux
-package, and in `source` this project with its git history. Both builds are standalone: they
-carry their own libmpv and FFmpeg.
+From the [releases](https://github.com/davsar89/VibeLC/releases):
 
-- **Linux** (Ubuntu 20.04 or newer, Debian 11 or newer): unzip it, then
-  `sudo apt install ./VibeLC/vibelc_1.0.1_amd64.deb`.
+- **Windows** (10 or 11, 64-bit): `vibelc-1.0.2-setup.exe` installs it, without administrator
+  rights, with an optional desktop shortcut and "Open with" entries, and updates an earlier
+  version in place. Or unzip `vibelc-1.0.2-windows-portable.zip` anywhere and run
+  `VibeLC\vibelc.exe`: a single file, with libmpv and FFmpeg inside.
+- **Linux** (Ubuntu 20.04 or newer, Debian 11 or newer): `sudo apt install ./vibelc_1.0.2_amd64.deb`.
   It adds VibeLC to the applications menu and to "Open With" for video and audio files, and
   installs the VA-API drivers for hardware decoding if they are missing. NVIDIA cards need the
   proprietary driver for NVDEC.
-- **Windows** (10 or 11, 64-bit): unzip it anywhere and run `VibeLC\vibelc.exe`. Keep
-  `libmpv-2.dll` and `vulkan-1.dll` next to it.
 
 ## Use
 
@@ -86,14 +85,17 @@ Packages (Docker and `cargo install cargo-about --locked --features cli` needed)
   libass and LuaJIT, all linked in) and vibelc on Ubuntu 20.04, then the .deb. The first run
   takes about 15 minutes. `packaging/linux/test-deb.sh ubuntu:24.04` installs the .deb in a
   clean container and checks that it plays.
-- `packaging/windows/build-zip.sh` makes the zip. It runs `build-deb.sh`, cross-compiles
-  `vibelc.exe`, and packs it with `libmpv-2.dll` from
-  [shinchiro's mpv builds](https://github.com/shinchiro/mpv-winbuild-cmake), the Vulkan loader
-  that DLL links, the .deb, and a copy of the project with its git history (without `target/`).
+- `packaging/windows/build-zip.sh` makes the zip. It runs `build-deb.sh`, builds a static libmpv
+  with `packaging/windows/build-libmpv.sh` (mpv 0.42 with FFmpeg 8.1 and only what VibeLC uses,
+  cross-compiled with llvm-mingw; the first run takes about 15 minutes), links it into
+  `vibelc.exe` (`--features static-mpv`), and packs that one file with the .deb and a copy of
+  the project with its git history (without `target/`). Inno Setup 6 then makes the installer
+  from the same folder: `iscc packaging\windows\vibelc.iss`.
 
-On Windows, `cargo build --release` works with the MSVC toolchain (Rust 1.95 or newer). To run
-the result, put `libmpv-2.dll` and `vulkan-1.dll` next to
-`target\release\vibelc.exe`, or set `VIBELC_LIBMPV` to the path of `libmpv-2.dll`.
+On Windows, `cargo build --release` works with the MSVC toolchain and loads libmpv at run time:
+put `libmpv-2.dll` (for example from [shinchiro's mpv builds](https://github.com/shinchiro/mpv-winbuild-cmake),
+which also need `vulkan-1.dll`) next to `target\release\vibelc.exe`, or set `VIBELC_LIBMPV`
+to its path.
 
 ## Windows test checklist
 

@@ -306,6 +306,10 @@ fn core_options(s: &Settings, hwdec: &str) -> Vec<(&'static str, String)> {
     let mut o = vec![
         ("vo", "libmpv".to_string()),
         ("hwdec", hwdec.to_string()),
+        // While the graphics card decodes, FFmpeg's threads (mpv's default is 4) only parse the
+        // stream; with one, the same CPU time and 4 fewer threads, and 4K HEVC peaks 70 MB lower.
+        // Software decoding keeps vd-lavc-threads, FFmpeg's choice. Older libmpv just warns.
+        ("hwdec-threads", "1".to_string()),
         // mpv's list plus MPEG-2 and WMV 9 (HD TV recordings, camcorders, DVDs), as VLC does and
         // mpv did. MPEG-4 Part 2 stays in software: cheap there, and badly handled by GPUs. The
         // rest of mpv's list only has Vulkan or macOS decoders, which VibeLC's OpenGL output can't use.

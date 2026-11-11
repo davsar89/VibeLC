@@ -1,4 +1,5 @@
-//! The subset of libmpv's C API that VibeLC uses, loaded at run time.
+//! The subset of libmpv's C API that VibeLC uses, loaded at run time, or with the `static-mpv`
+//! feature linked into the program.
 //!
 //! Loading at run time means no C headers or import libraries are needed to build on any OS,
 //! and a missing library becomes a clear message instead of a loader error. The declarations
@@ -8,7 +9,7 @@
 
 #![allow(non_camel_case_types)]
 
-use std::ffi::{CStr, c_char, c_double, c_int, c_ulong, c_void};
+use std::ffi::{c_char, c_double, c_int, c_ulong, c_void};
 use std::path::PathBuf;
 
 use libloading::Library;
@@ -197,8 +198,66 @@ pub struct Api {
     pub render_context_render: unsafe extern "C" fn(*mut mpv_render_context, *mut mpv_render_param) -> c_int,
     pub render_context_report_swap: unsafe extern "C" fn(*mut mpv_render_context),
     pub render_context_free: unsafe extern "C" fn(*mut mpv_render_context),
-    /// Keeps the function pointers above valid.
-    _lib: Library,
+    /// Keeps the function pointers above valid (none when libmpv is linked in).
+    _lib: Option<Library>,
+}
+
+/// Calls `$m!` with every function of [`Api`] as `field: "c_name"`.
+macro_rules! functions {
+    ($m:ident) => {
+        $m! {
+            client_api_version: "mpv_client_api_version",
+            error_string: "mpv_error_string",
+            create: "mpv_create",
+            initialize: "mpv_initialize",
+            terminate_destroy: "mpv_terminate_destroy",
+            set_option_string: "mpv_set_option_string",
+            command: "mpv_command",
+            command_async: "mpv_command_async",
+            set_property_async: "mpv_set_property_async",
+            get_property: "mpv_get_property",
+            get_property_async: "mpv_get_property_async",
+            observe_property: "mpv_observe_property",
+            request_log_messages: "mpv_request_log_messages",
+            wait_event: "mpv_wait_event",
+            set_wakeup_callback: "mpv_set_wakeup_callback",
+            free_node_contents: "mpv_free_node_contents",
+            render_context_create: "mpv_render_context_create",
+            render_context_set_update_callback: "mpv_render_context_set_update_callback",
+            render_context_update: "mpv_render_context_update",
+            render_context_render: "mpv_render_context_render",
+            render_context_report_swap: "mpv_render_context_report_swap",
+            render_context_free: "mpv_render_context_free",
+        }
+    };
+}
+
+/// libmpv linked into the program (`static-mpv`). Declared without their parameters: [`Api`]'s
+/// fields carry the prototypes, and [`linked`] gives each address the field's type.
+#[cfg(feature = "static-mpv")]
+mod linked {
+    macro_rules! declare {
+        ($($field:ident: $c:literal,)*) => {
+            unsafe extern "C" {
+                $(#[link_name = $c] pub fn $field();)*
+            }
+        };
+    }
+    functions!(declare);
+}
+
+#[cfg(feature = "static-mpv")]
+fn linked() -> Api {
+    macro_rules! table {
+        ($($field:ident: $c:literal,)*) => {
+            Api {
+                // SAFETY: the field's type matches the C prototype in libmpv's headers.
+                $($field: unsafe { std::mem::transmute::<unsafe extern "C" fn(), _>(linked::$field) },)*
+                _lib: None,
+            }
+        };
+    }
+    functions!(table)
 }
 
 /// Why libmpv could not be used.
@@ -265,6 +324,11 @@ fn candidates() -> Vec<PathBuf> {
 impl Api {
     /// Opens the first libmpv that loads and checks that it is recent enough.
     pub fn load() -> Result<Api, LoadError> {
+        #[cfg(feature = "static-mpv")]
+        if std::env::var_os("VIBELC_LIBMPV").is_none() {
+            log::info!("using the libmpv linked into vibelc");
+            return Ok(linked());
+        }
         let mut tried = Vec::new();
         let mut last_error = String::from("no candidates");
         for path in candidates() {
@@ -287,50 +351,28 @@ impl Api {
     fn from_library(lib: Library, name: String) -> Result<Api, LoadError> {
         macro_rules! sym {
             ($c:literal) => {{
-                let symbol: &CStr = $c;
+                let symbol = $c;
                 // SAFETY: the declared type matches the C prototype in libmpv's headers.
                 match unsafe { lib.get(symbol) } {
                     Ok(s) => *s,
                     Err(_) => {
-                        return Err(LoadError::MissingSymbol {
-                            library: name,
-                            symbol: symbol.to_string_lossy().into_owned(),
-                        });
+                        return Err(LoadError::MissingSymbol { library: name, symbol: symbol.to_string() });
                     }
                 }
             }};
         }
-        let client_api_version: unsafe extern "C" fn() -> c_ulong = sym!(c"mpv_client_api_version");
+        let client_api_version: unsafe extern "C" fn() -> c_ulong = sym!("mpv_client_api_version");
         // SAFETY: takes no arguments and only returns a constant.
         let version = unsafe { client_api_version() };
         if version < MIN_API_VERSION {
             return Err(LoadError::TooOld { library: name, version });
         }
-        Ok(Api {
-            client_api_version,
-            error_string: sym!(c"mpv_error_string"),
-            create: sym!(c"mpv_create"),
-            initialize: sym!(c"mpv_initialize"),
-            terminate_destroy: sym!(c"mpv_terminate_destroy"),
-            set_option_string: sym!(c"mpv_set_option_string"),
-            command: sym!(c"mpv_command"),
-            command_async: sym!(c"mpv_command_async"),
-            set_property_async: sym!(c"mpv_set_property_async"),
-            get_property: sym!(c"mpv_get_property"),
-            get_property_async: sym!(c"mpv_get_property_async"),
-            observe_property: sym!(c"mpv_observe_property"),
-            request_log_messages: sym!(c"mpv_request_log_messages"),
-            wait_event: sym!(c"mpv_wait_event"),
-            set_wakeup_callback: sym!(c"mpv_set_wakeup_callback"),
-            free_node_contents: sym!(c"mpv_free_node_contents"),
-            render_context_create: sym!(c"mpv_render_context_create"),
-            render_context_set_update_callback: sym!(c"mpv_render_context_set_update_callback"),
-            render_context_update: sym!(c"mpv_render_context_update"),
-            render_context_render: sym!(c"mpv_render_context_render"),
-            render_context_report_swap: sym!(c"mpv_render_context_report_swap"),
-            render_context_free: sym!(c"mpv_render_context_free"),
-            _lib: lib,
-        })
+        macro_rules! table {
+            ($($field:ident: $c:literal,)*) => {
+                Api { $($field: sym!($c),)* _lib: Some(lib) }
+            };
+        }
+        Ok(functions!(table))
     }
 
     /// "major.minor" of the loaded client API.

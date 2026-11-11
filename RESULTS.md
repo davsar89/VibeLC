@@ -141,7 +141,8 @@ Measured with 20 s of per-thread CPU sampling during playback, unless noted.
 - **Start-up:** with no file, VibeLC's window appears after 0.037–0.053 s and VLC's after
   0.093–0.129 s (5 runs each). VibeLC's first video frame follows 0.51–0.55 s after its window
   (0.8–1.0 s for 1080p H.264, 1.4–1.5 s for 2160p H.264). With no file VibeLC uses 125 MB against
-  VLC's 41 MB: `libmpv-2.dll` (121 MB, every mpv feature and library linked in) is mapped at start.
+  VLC's 41 MB: VibeLC opens its Direct3D 11 device, with video support, at start, which loads the
+  graphics driver's video and shader-compiler parts; VLC opens none before playing (1.0.2 below).
 - **GPU:** Windows' per-process "3D" engine use was 2–9% for VibeLC and 1–8% for VLC. The
   "VideoDecode" counter read 100% for every player and clip, which this driver reports for any
   use, so it is left out.
@@ -153,6 +154,25 @@ Measured with 20 s of per-thread CPU sampling during playback, unless noted.
 VibeLC plays everything here with VLC's dropped-frame-free smoothness or better, in 15–75% less
 memory, and starts 2–3 times faster; VLC uses 1–5 points less of one core during hardware-decoded
 playback.
+
+### 1.0.2: one FFmpeg thread on the GPU, libmpv linked in
+
+Two changes, measured against 1.0.1 alternately, two runs each (`--threads` splits the CPU by
+thread):
+
+- **`hwdec-threads=1`.** While the card decodes, FFmpeg's threads (mpv's default is 4) only parse
+  the stream. With one, that work moves to mpv's `core` thread: the same CPU within the noise
+  (1080p H.264 11.5 → 11.6% of a core, 2160p HEVC 10-bit 14.6 → 13.9%), 4 fewer threads, and a
+  lower peak memory (2160p HEVC 10-bit 383 → 314 MB). Software decoding keeps FFmpeg's thread
+  count (9 here).
+- **Static libmpv.** `vibelc.exe` (54 MB) carries mpv 0.42 and FFmpeg 8.1 with only what VibeLC
+  uses (`packaging/windows/build-libmpv.sh`) and imports only Windows' own DLLs, in place of
+  `vibelc.exe`, `libmpv-2.dll` and `vulkan-1.dll` (138 MB). Against 1.0.1: the window appears
+  after 0.032–0.036 s (0.045–0.051 s), the first frame of 1080p H.264 0.82–0.84 s after it
+  (1.01–1.03 s), playback uses the same CPU (1080p H.264 10.9 → 11.0%, 2160p HEVC 10-bit
+  13.1 → 12.4%, 1080p HEVC in software 25.0 → 25.5%), and memory with no file is 120 MB (126 MB).
+  That last figure is the Direct3D 11 device and the graphics driver, not libmpv: with the
+  driver's OpenGL (`--gl=wgl`) the same build keeps 84 MB private at rest, VLC 18 MB.
 
 ### Earlier output paths
 
