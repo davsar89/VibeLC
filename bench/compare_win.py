@@ -168,9 +168,10 @@ def play(cmd, env, tmp, timeout=300, close_after=None):
             dlls = modules(proc._handle) if THREADS else []
             first_threads = thread_times(ps, ui_tid, dlls) if THREADS else {}
         if THREADS and steady:
-            # Threads are gone once the process exits, so the last sample stands for the end.
+            # Each thread's last sample stands for its end: mpv stops most of its threads at the
+            # end of the file, before the process exits.
             try:
-                last_threads = thread_times(ps, ui_tid, dlls)
+                last_threads.update(thread_times(ps, ui_tid, dlls))
             except psutil.Error:
                 pass
         if (window is not None and close_after is not None and now >= window + close_after) or now > timeout:

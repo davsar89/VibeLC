@@ -1,0 +1,2 @@
+# LF everywhere, also in Windows checkouts: the shell scripts run in Docker and WSL.
+* text=auto eol=lf
