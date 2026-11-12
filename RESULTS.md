@@ -174,6 +174,30 @@ thread):
   That last figure is the Direct3D 11 device and the graphics driver, not libmpv: with the
   driver's OpenGL (`--gl=wgl`) the same build keeps 84 MB private at rest, VLC 18 MB.
 
+### Where the CPU goes
+
+Profiled on 1.0.2 with Windows' own `wpr -start CPU` (1 kHz samples with stacks) during 1080p
+H.264 and 2160p HEVC 10-bit playback, read with `samply import`, against a build with symbols
+(mpv and FFmpeg from `build-libmpv.sh`, whose `-gcodeview` gives a PDB). VibeLC used 9.3% and
+10.3% of a core; for 1080p H.264, mpv's `core` thread 2.9%, the window thread 2.3%, `vo` 1.0%,
+the Intel driver's threads 2.0%, `ao/wasapi` 0.7%, `demux` 0.4%.
+
+- **No mpv or FFmpeg function stands out:** the samples land on waits. In `core`, 2.2 of the 2.9
+  points are under `mp_wait_events`, and in `vo` 0.6 of 1.0 under `vo_wait_default`; the work
+  proper is `mp_filter_graph_run` (0.6, mostly handing frames to the driver's decoder) and
+  `write_video` (0.6) in `core`, `flip_page` (0.3) in `vo`. Time "in" a wait is the cost of
+  waking up: the threads run in bursts too short for a 1 ms sample.
+- **Wake-ups** (context switches per second, 30 fps video on a 60 Hz screen): window thread 191,
+  `vo` 169, `core` 115, `ao/wasapi` 100 (WASAPI's 10 ms period), `demux` 72, three driver threads
+  445; about 1,100 in all, 37 per video frame. They come from mpv's threads and from the render
+  API handing each frame between `vo` and the window thread, not from a loop a small change fixes.
+- **The window thread's time** is mostly Windows' message handling (win32k and user32, 1.5 of
+  its 2.3 points), for about 6 wake-ups per frame: mpv's frame and event callbacks, the redraw
+  and presenting.
+
+So mpv stays unpatched: no hotspot that a small change, offered upstream, would remove. Fewer
+cross-thread wake-ups per frame would mean redesigning how the render API hands frames over.
+
 ### Earlier output paths
 
 Before Direct3D 11, VibeLC drew with OpenGL. With the driver's OpenGL (WGL) this Intel card has
